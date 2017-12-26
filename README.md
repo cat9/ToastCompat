@@ -15,7 +15,7 @@ So i have to find another solution to fix the bug `BadTokenException`
 
 
 ### Solution
-Just copy [ToastCompat](https://github.com/cat9/ToastCompat/blob/master/app/src/main/java/com/miku/toast/ToastCompat.java) to your project,and use it like `Toast`.
+Just copy [ToastCompat.java](https://github.com/cat9/ToastCompat/blob/master/app/src/main/java/com/miku/toast/ToastCompat.java) to your project,and use it like `Toast`.
 
 these is the main code to solve the issue:
 
