@@ -1,6 +1,8 @@
 # ToastCompat
 ToastCompat for Android 7.1.1, Avoiding Toast BadTokenException , Just what exactly the repo [ToastCompat](https://github.com/drakeet/ToastCompat) do. I name this repo "ToastCompat" just want somebody could be help.
 
+现在你看到的这个repo，是比另外一个ToastCompat,手机兼容性更加广的方案
+
 
 ### Why
 for more details about [BadTokenException on Toast ](https://github.com/drakeet/ToastCompat)
