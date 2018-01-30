@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -12,6 +13,8 @@ import android.widget.Toast;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by miku on 2017/12/26.
@@ -81,13 +84,45 @@ public class ToastCompat extends Toast{
         try {
             Object mTN=getFieldValue(this,"mTN");
             if(mTN!=null){
-                Object rawHandler=getFieldValue(mTN,"mHandler");
-                if(rawHandler!=null){
-                    setFieldValue(rawHandler,"mCallback",new InternalHandlerCallback((Handler)rawHandler));
+                boolean isSuccess=false;
+
+                //a hack to some device which use the code between android 6.0 and android 7.1.1
+                Object rawShowRunnable=getFieldValue(mTN,"mShow");
+                if(rawShowRunnable!=null && rawShowRunnable instanceof Runnable){
+                    isSuccess=setFieldValue(mTN,"mShow",new InternalRunnable((Runnable)rawShowRunnable));
+                }
+
+                // hack to android 7.1.1,these cover 99% devices.
+                if(!isSuccess){
+                    Object rawHandler=getFieldValue(mTN,"mHandler");
+                    if(rawHandler!=null && rawHandler instanceof Handler){
+                        isSuccess=setFieldValue(rawHandler,"mCallback",new InternalHandlerCallback((Handler)rawHandler));
+                    }
+                }
+
+                if(!isSuccess){
+                    Log.e(TAG,"tryToHack error.");
                 }
             }
         }catch (Throwable e){
             e.printStackTrace();
+        }
+    }
+
+    private class InternalRunnable implements Runnable{
+        private final Runnable mRunnable;
+
+        public InternalRunnable(Runnable mRunnable) {
+            this.mRunnable = mRunnable;
+        }
+
+        @Override
+        public void run() {
+            try {
+                this.mRunnable.run();
+            }catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -109,24 +144,43 @@ public class ToastCompat extends Toast{
         }
     }
 
-    private static void setFieldValue(Object object, String fieldName, Object newFieldValue) throws Exception {
+    private static boolean setFieldValue(Object object, String fieldName, Object newFieldValue) {
         Field field = getDeclaredField(object,fieldName);
-        Field modifiersField = Field.class.getDeclaredField("accessFlags");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        if(!field.isAccessible()) {
-            field.setAccessible(true);
+        if(field!=null){
+            try {
+                int accessFlags=field.getModifiers();
+                if(Modifier.isFinal(accessFlags)){
+                    Field modifiersField = Field.class.getDeclaredField("accessFlags");
+                    modifiersField.setAccessible(true);
+                    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+                }
+                if(!field.isAccessible()) {
+                    field.setAccessible(true);
+                }
+                field.set(object, newFieldValue);
+                return true;
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
-        field.set(object, newFieldValue);
+        return false;
     }
 
-    private static Object getFieldValue(Object obj, final String fieldName) throws Exception{
+    private static Object getFieldValue(Object obj, final String fieldName){
         Field field = getDeclaredField(obj,fieldName);
+        return getFieldValue(obj,field);
+    }
+
+    private static Object getFieldValue(Object obj,Field field){
         if(field!=null){
-            if(!field.isAccessible()) {
-                field.setAccessible(true);
+            try {
+                if(!field.isAccessible()) {
+                    field.setAccessible(true);
+                }
+                return field.get(obj);
+            }catch (Exception e){
+                e.printStackTrace();
             }
-            return field.get(obj);
         }
         return null;
     }

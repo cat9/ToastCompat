@@ -3,6 +3,8 @@ ToastCompat for Android 7.1.1, Avoiding Toast BadTokenException , Just what exac
 
 现在你看到的这个repo，是比另外一个ToastCompat,手机兼容性更加广的方案
 
+## Bug Fixed
+2018-01-30  ~~these patch did not work on some devices (OPPO CPH1707)~~（OPPO CPH1707使用了界于6.0与7.1.1之间的代码，真是辛苦他们合并代码了..）
 
 ### Why
 for more details about [BadTokenException on Toast ](https://github.com/drakeet/ToastCompat)
